@@ -1,0 +1,13 @@
+{
+  "server_name": "obsidian-route12",
+  "transport": "stdio",
+  "command": "npx",
+  "args": [
+    "-y",
+    "obsidian-mcp-server"
+  ],
+  "environment": {
+    "OBSIDIAN_API_URL": "${OBSIDIAN_API_URL}",
+    "OBSIDIAN_API_KEY": "${OBSIDIAN_API_KEY}"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "obsidian-route12",
+  "transport": "streamable-http",
+  "url": "${OBSIDIAN_MCP_URL}",
+  "headers": {
+    "Authorization": "Bearer ${OBSIDIAN_API_KEY}"
+  }
+}

@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI 外脑 2.0 管理控制台</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="console-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">脑</div>
+        <div>
+          <strong>AI 外脑 2.0</strong>
+          <small>本地管理控制台</small>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="主导航">
+        <a href="#/dashboard" data-route="dashboard">工作台总览</a>
+        <a href="#/settings" data-route="settings">初始化 / 设置</a>
+        <a href="#/sources" data-route="sources">信源与获取</a>
+        <a href="#/processing" data-route="processing">处理与模型</a>
+        <a href="#/knowledge" data-route="knowledge">知识与交付</a>
+        <a href="#/project-memory" data-route="project-memory">项目记忆</a>
+        <a href="#/system" data-route="system">系统与发布</a>
+      </nav>
+
+      <div class="sidebar-note">
+        <span>五层架构</span>
+        <small>Source → Acquisition → Processing → Knowledge → Delivery</small>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="breadcrumb" id="breadcrumb">工作台 / 总览</p>
+          <h1 id="page-title">工作台总览</h1>
+        </div>
+        <div class="topbar-actions">
+          <input id="global-search" placeholder="搜索信源、模型、Review..." />
+          <div id="top-status" class="top-status"></div>
+          <button id="refresh" type="button">刷新</button>
+        </div>
+      </header>
+
+      <main class="page-stack">
+        <section class="page" data-page="dashboard">
+          <div class="notice" id="dashboard-notice"></div>
+          <div id="dashboard-kpis" class="metric-grid"></div>
+          <div class="card">
+            <div class="section-title">
+              <h2>五层流程状态</h2>
+              <span>最近一次运行结果</span>
+            </div>
+            <div id="flow-cards" class="flow-grid"></div>
+          </div>
+          <div class="two-column">
+            <div class="card">
+              <h2>信源概览</h2>
+              <div id="dashboard-sources"></div>
+            </div>
+            <div class="card">
+              <h2>待办与下一步</h2>
+              <div id="dashboard-next"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" data-page="settings">
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>初始化向导</h2>
+                <p>首次使用请按顺序完成配置。Web Console 只保存配置，不在这里真实调用 ASR、yt-dlp、FFmpeg、MCP 或 Vault。</p>
+              </div>
+              <span class="badge">设置窗口</span>
+            </div>
+            <form id="init-form" class="form-grid">
+              <fieldset>
+                <legend>1. ASR 引擎与凭据</legend>
+                <label>ASR 引擎
+                  <select name="engine" id="asr-engine-select">
+                    <option value="mimo">小米 MiMo ASR</option>
+                    <option value="faster_whisper">本地 faster-whisper</option>
+                    <option value="aliyun_qwen_asr">阿里云 Qwen-ASR</option>
+                    <option value="tencent_asr">腾讯云 ASR</option>
+                    <option value="volcengine_asr">火山引擎 ASR</option>
+                  </select>
+                </label>
+
+                <div class="asr-config" data-asr-config="mimo">
+                  <label>MiMo API 密钥
+                    <input name="mimo_key" type="password" autocomplete="off" />
+                  </label>
+                  <p class="muted full-row">MiMo API 地址已使用项目内置默认值，初始化时不需要手动填写。</p>
+                </div>
+
+                <div class="asr-config" data-asr-config="faster_whisper" hidden>
+                  <label>本地模型大小
+                    <select name="model_size">
+                      <option value="base">base</option>
+                      <option value="small">small</option>
+                      <option value="medium">medium</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div class="asr-config" data-asr-config="aliyun_qwen_asr" hidden>
+                  <label>阿里云 Qwen-ASR API 密钥
+                    <input name="aliyun_qwen_asr_api_key" type="password" autocomplete="off" />
+                  </label>
+                  <label>阿里云 Qwen-ASR 模型
+                    <input name="aliyun_qwen_asr_model" value="qwen-audio-asr" />
+                  </label>
+                  <p class="muted full-row">阿里云服务地址已内置为百炼 DashScope 兼容接口，除非后续高级设置开放，否则这里不需要填写 URL。</p>
+                </div>
+
+                <div class="asr-config" data-asr-config="tencent_asr" hidden>
+                  <label>腾讯云 ASR SecretId
+                    <input name="tencent_asr_secret_id" type="password" autocomplete="off" />
+                  </label>
+                  <label>腾讯云 ASR SecretKey
+                    <input name="tencent_asr_secret_key" type="password" autocomplete="off" />
+                  </label>
+                  <label>腾讯云 ASR 地域
+                    <input name="tencent_asr_region" value="ap-guangzhou" />
+                  </label>
+                  <label>腾讯云 ASR 引擎模型
+                    <input name="tencent_asr_engine_model_type" value="16k_zh" />
+                  </label>
+                </div>
+
+                <div class="asr-config" data-asr-config="volcengine_asr" hidden>
+                  <label>火山引擎 ASR App ID
+                    <input name="volcengine_asr_app_id" type="password" autocomplete="off" />
+                  </label>
+                  <label>火山引擎 ASR Access Token
+                    <input name="volcengine_asr_access_token" type="password" autocomplete="off" />
+                  </label>
+                  <label>火山引擎 ASR 集群
+                    <input name="volcengine_asr_cluster" />
+                  </label>
+                  <p class="muted full-row">火山引擎接口地址已按默认提交/查询接口内置；本页只收集本地凭据和集群配置。</p>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>2. 输出目录与导出格式</legend>
+                <label>文字稿输出目录 <span class="hint">默认为项目文件夹内</span>
+                  <div class="path-picker">
+                    <input name="output_dir" value="outputs" />
+                    <button type="button" data-pick-folder="output_dir">选择文件夹</button>
+                  </div>
+                </label>
+                <label>音频缓存目录
+                  <div class="path-picker">
+                    <input name="audio_output_dir" placeholder="留空则使用 <输出目录>/audio" />
+                    <button type="button" data-pick-folder="audio_output_dir">选择文件夹</button>
+                  </div>
+                </label>
+                <label>导出格式
+                  <select name="export">
+                    <option value="md">Markdown</option>
+                    <option value="txt">TXT</option>
+                    <option value="both">Markdown + TXT</option>
+                  </select>
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <legend>3. 内容返回模式</legend>
+                <input type="hidden" name="im_content_mode" value="original" />
+                <div class="choice-row" role="group" aria-label="内容返回模式">
+                  <button type="button" data-choice-group="im_content_mode" data-choice-value="original" class="choice-button selected">
+                    <strong>原文模式</strong><span>只返回转写文字</span>
+                  </button>
+                  <button type="button" data-choice-group="im_content_mode" data-choice-value="card" class="choice-button">
+                    <strong>卡片模式</strong><span>进入知识卡片审核</span>
+                  </button>
+                  <button type="button" data-choice-group="im_content_mode" data-choice-value="both" class="choice-button">
+                    <strong>双输出</strong><span>原文 + 卡片草稿</span>
+                  </button>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>4. 交互渠道</legend>
+                <input type="hidden" name="interaction_channel" value="auto" />
+                <div class="choice-row" role="group" aria-label="交互渠道">
+                  <button type="button" data-choice-group="interaction_channel" data-choice-value="auto" class="choice-button selected">
+                    <strong>自动判断</strong><span>按当前入口决定</span>
+                  </button>
+                  <button type="button" data-choice-group="interaction_channel" data-choice-value="im" class="choice-button">
+                    <strong>IM / 微信</strong><span>面向消息入口</span>
+                  </button>
+                  <button type="button" data-choice-group="interaction_channel" data-choice-value="terminal" class="choice-button">
+                    <strong>终端 / Agent</strong><span>面向当前对话</span>
+                  </button>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>5. 音频保留</legend>
+                <input type="hidden" name="keep_audio" value="false" />
+                <div class="choice-row two" role="group" aria-label="音频保留">
+                  <button type="button" data-choice-group="keep_audio" data-choice-value="false" class="choice-button selected">
+                    <strong>不保留</strong><span>处理完成后清理临时音频</span>
+                  </button>
+                  <button type="button" data-choice-group="keep_audio" data-choice-value="true" class="choice-button">
+                    <strong>保留</strong><span>保留提取出的音频文件</span>
+                  </button>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>6. MCP 配置</legend>
+                <label class="inline"><input name="configure_mcp" type="checkbox" /> 现在配置 Obsidian MCP（用于 card / both 审核流程）</label>
+              </fieldset>
+
+              <button type="submit">保存初始化配置</button>
+            </form>
+            <p id="init-next-step" class="muted"></p>
+            <pre id="init-result"></pre>
+          </div>
+        </section>
+
+        <section class="page" data-page="sources">
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>信源与获取能力</h2>
+                <p>Source 负责识别，Acquisition 负责获取。这里展示本地可判定的健康度，不主动访问外部平台。</p>
+              </div>
+              <span>Source + Acquisition</span>
+            </div>
+            <div id="source-radar" class="radar-wrap"></div>
+            <div id="source-cards" class="capability-card-grid"></div>
+            <div id="source-settings-panel"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">
+              <h2>内容获取：ingest</h2>
+              <span>统一进入五层主管线</span>
+            </div>
+            <form id="ingest-form" class="form-grid compact">
+              <label>链接 / 本地路径
+                <input name="input" placeholder="粘贴 URL，或输入本地音频/视频路径" />
+              </label>
+              <label>信源类型
+                <select name="source_type">
+                  <option value="auto">自动识别</option>
+                  <option value="douyin">抖音</option>
+                  <option value="local_audio">本地音频 / MP4 文件</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="bilibili">B站</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="xiaohongshu">小红书</option>
+                  <option value="twitch">Twitch</option>
+                  <option value="vimeo">Vimeo</option>
+                  <option value="x_video">X / Twitter</option>
+                  <option value="generic_video">通用视频链接</option>
+                </select>
+              </label>
+              <label>ASR 引擎
+                <select name="engine">
+                  <option value="mock">Mock 测试引擎</option>
+                  <option value="faster_whisper">本地 faster-whisper</option>
+                  <option value="mimo">小米 MiMo ASR</option>
+                  <option value="custom_api">自定义 ASR API</option>
+                  <option value="aliyun_qwen_asr">阿里云 Qwen-ASR</option>
+                  <option value="tencent_asr">腾讯云 ASR</option>
+                  <option value="volcengine_asr">火山引擎 ASR</option>
+                </select>
+              </label>
+              <label>导出格式
+                <select name="export">
+                  <option value="both">Markdown + TXT</option>
+                  <option value="md">Markdown</option>
+                  <option value="txt">TXT</option>
+                </select>
+              </label>
+              <button type="submit">运行 ingest</button>
+            </form>
+            <div id="ingest-layers"></div>
+            <pre id="ingest-result"></pre>
+          </div>
+        </section>
+
+        <section class="page" data-page="processing">
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>ASR 模型与服务商</h2>
+                <p>Processing 只通过 ASR Engine Factory 调用，不关心具体厂商细节。</p>
+              </div>
+              <span>Processing</span>
+            </div>
+            <div id="asr-radar" class="radar-wrap"></div>
+            <div id="asr-cards" class="capability-card-grid"></div>
+          </div>
+          <div class="card">
+            <h2>处理能力</h2>
+            <div id="processing-features" class="feature-grid"></div>
+          </div>
+        </section>
+
+        <section class="page" data-page="knowledge">
+          <div class="two-column">
+            <div class="card">
+              <h2>MCP / Obsidian 状态</h2>
+              <div id="route12" class="grid"></div>
+            </div>
+            <div class="card">
+              <h2>Delivery 交付预览</h2>
+              <div id="delivery-preview"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>知识库框架</h2>
+                <p>只读展示 Obsidian/AI外脑知识库 的 00–09 公开骨架，不直接写 Vault。</p>
+              </div>
+              <span>Knowledge</span>
+            </div>
+            <div id="knowledge-structure" class="capability-card-grid"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">
+              <h2>审核队列</h2>
+              <button id="load-reviews" type="button">加载 Review</button>
+            </div>
+            <div id="reviews"></div>
+          </div>
+        </section>
+
+        <section class="page" data-page="project-memory">
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>项目记忆</h2>
+                <p>把 AI coding 阶段成果沉淀到 08_项目映射库。这里提供只读搜索与“新想法匹配项目”，正式写入仍走审核门。</p>
+              </div>
+              <span>Project Memory</span>
+            </div>
+            <div id="project-memory-status" class="status-panel"></div>
+            <div id="project-memory-recent" class="capability-card-grid"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>连接工作 AI Agent</h2>
+                <p>给 Codex、Qoder、Claude Code、Trae、Cursor 或其他工作 Agent 生成可复制配置。第一版只复制配置，不直接写外部 Agent 文件。</p>
+              </div>
+              <span>Agent Setup</span>
+            </div>
+            <div class="agent-setup-grid">
+              <label>选择工作 Agent
+                <select id="agent-setup-select">
+                  <option value="generic">通用 AI Coding Agent</option>
+                  <option value="codex">Codex</option>
+                  <option value="qoder">QoderWork / Qoder</option>
+                  <option value="claude_code">Claude Code</option>
+                  <option value="trae">Trae</option>
+                  <option value="cursor">Cursor</option>
+                </select>
+              </label>
+              <div class="copy-button-row">
+                <button type="button" data-copy-agent-setup="setup_prompt">复制完整配置说明</button>
+                <button type="button" class="ghost" data-copy-agent-setup="minimal_prompt">复制最小 Prompt</button>
+                <button type="button" class="ghost" data-copy-agent-setup="status_command">复制验证命令</button>
+                <button type="button" class="ghost" data-copy-agent-setup="memory_json_example">复制 memory.json 示例</button>
+              </div>
+            </div>
+            <div id="agent-setup-feedback" class="hint"></div>
+            <div id="agent-setup-panel" class="agent-setup-panel"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>工作 Agent 连接验证</h2>
+                <p>生成一次性验证指令，让工作 Agent 真正写入一条项目记忆草稿。检测到落盘和 Review 记录后，方格会变绿。</p>
+              </div>
+              <span>Real Check</span>
+            </div>
+            <div id="agent-connection-card" class="connection-card"></div>
+            <div class="copy-button-row">
+              <button type="button" id="generate-agent-challenge">生成验证指令</button>
+              <button type="button" class="ghost" data-copy-agent-setup="challenge_instruction">复制验证指令</button>
+              <button type="button" class="ghost" id="verify-agent-connection">测试连接</button>
+            </div>
+            <div id="agent-setup-verify" class="verify-panel"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">
+              <div>
+                <h2>最近项目记忆草稿</h2>
+                <p>显示最近写入 _待审核 的项目记忆，用于确认工作 Agent 的 capture 是否真实落盘。</p>
+              </div>
+              <a href="#/knowledge">查看审核队列</a>
+            </div>
+            <div id="project-memory-drafts" class="capability-card-grid"></div>
+          </div>
+        </section>
+
+        <section class="page" data-page="system">
+          <div class="card">
+            <h2>系统与发布</h2>
+            <div id="system-info" class="grid"></div>
+          </div>
+          <div class="card">
+            <h2>初始化清单</h2>
+            <div id="manifest-summary"></div>
+          </div>
+          <div class="card author-card">
+            <h2>作者信息</h2>
+            <p>作者：陌K</p>
+            <p>微信：momeak110</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=project-memory-verify-20260701"></script>
+</body>
+</html>

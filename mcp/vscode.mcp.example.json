@@ -1,0 +1,29 @@
+{
+  "servers": {
+    "obsidian-route12": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp-server"
+      ],
+      "env": {
+        "OBSIDIAN_API_URL": "${input:obsidianApiUrl}",
+        "OBSIDIAN_API_KEY": "${input:obsidianApiKey}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "obsidianApiUrl",
+      "type": "promptString",
+      "description": "Obsidian Local REST API URL"
+    },
+    {
+      "id": "obsidianApiKey",
+      "type": "promptString",
+      "description": "Obsidian Local REST API key",
+      "password": true
+    }
+  ]
+}

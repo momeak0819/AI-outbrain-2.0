@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "obsidian-route12": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp-server"
+      ],
+      "env": {
+        "OBSIDIAN_API_URL": "${OBSIDIAN_API_URL}",
+        "OBSIDIAN_API_KEY": "${OBSIDIAN_API_KEY}"
+      }
+    }
+  }
+}

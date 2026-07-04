@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "description": "Capabilities that must participate in first-run initialization and clean-release checks.",
+  "components": [
+    {
+      "id": "core_runtime",
+      "type": "runtime",
+      "required": true,
+      "config": ["project .venv", "requirements.txt"],
+      "initializer": "bootstrap_runtime.ensure_project_venv",
+      "health_check": "agent_cli.py check-env",
+      "runtime_paths": [".venv"],
+      "release_excludes": [".venv"]
+    },
+    {
+      "id": "asr_engines",
+      "type": "tool",
+      "required": true,
+      "config": ["asr.engine", "engine-specific credentials or model"],
+      "initializer": "main.py / agent_cli.py init Web Console",
+      "health_check": "agent_cli.py check-env",
+      "runtime_paths": ["runtime/models", "config.ini"],
+      "release_excludes": ["runtime", "config.ini"]
+    },
+    {
+      "id": "obsidian_mcp",
+      "type": "tool",
+      "required": false,
+      "config": ["mcp.setup_status", "secure client credentials"],
+      "initializer": "agent_cli.py mcp-setup",
+      "health_check": "agent_cli.py mcp-status",
+      "runtime_paths": ["config.ini", "Obsidian/AI外脑知识库/.obsidian/plugins/obsidian-local-rest-api/data.json"],
+      "release_excludes": ["config.ini", "Obsidian/AI外脑知识库/.obsidian/plugins/obsidian-local-rest-api/data.json"]
+    },
+    {
+      "id": "route12_workflow",
+      "type": "workflow",
+      "required": true,
+      "config": ["preferences.im_content_mode", "preferences.interaction_channel"],
+      "initializer": "skills/INIT_PROTOCOL.md",
+      "health_check": "agent_cli.py route12-check",
+      "runtime_paths": [".workflow/reviews", "outputs", "Obsidian/AI外脑知识库/00_Inbox"],
+      "release_excludes": [".workflow", "outputs", "Obsidian/AI外脑知识库/00_Inbox user content"]
+    },
+    {
+      "id": "text_encoding_health",
+      "type": "health_check",
+      "required": true,
+      "config": ["strict UTF-8 maintained text"],
+      "initializer": "none",
+      "health_check": "python -X utf8 tools/check_text_encoding.py",
+      "runtime_paths": [],
+      "release_excludes": []
+    },
+    {
+      "id": "ytdlp_media_downloader",
+      "type": "tool",
+      "required": false,
+      "config": ["yt-dlp executable or Python package", "platform-specific cookies when required"],
+      "initializer": "planned",
+      "health_check": "planned: ytdlp availability check",
+      "runtime_paths": ["runtime/downloads", "runtime/media"],
+      "release_excludes": ["runtime/downloads", "runtime/media"]
+    },
+    {
+      "id": "web_console",
+      "type": "ui",
+      "required": true,
+      "config": ["localhost bind", "browser auto-open"],
+      "initializer": "agent_cli.py console / main.py",
+      "health_check": "GET /api/status",
+      "runtime_paths": ["runtime/web_console"],
+      "release_excludes": ["runtime/web_console"]
+    },
+    {
+      "id": "source_update_checker",
+      "type": "maintenance",
+      "required": false,
+      "config": ["git origin remote", "AI_OUTBRAIN_DISABLE_UPDATE_CHECK"],
+      "initializer": "main.py / agent_cli.py console / agent_cli.py init",
+      "health_check": "agent_cli.py update-check --no-pull --pretty",
+      "runtime_paths": [],
+      "release_excludes": []
+    },
+    {
+      "id": "project_memory_capture",
+      "type": "knowledge_workflow",
+      "required": false,
+      "config": ["structured project memory payload", "Obsidian review gate", "external AI agent scheduler"],
+      "initializer": "skills/project-memory-capture/SKILL.md",
+      "health_check": "agent_cli.py project-memory-status --pretty",
+      "runtime_paths": [
+        ".workflow/reviews",
+        "Obsidian/AI外脑知识库/00_Inbox/_待审核",
+        "Obsidian/AI外脑知识库/08_项目映射库"
+      ],
+      "release_excludes": [
+        ".workflow",
+        "00_Inbox user content"
+      ]
+    }
+  ],
+  "inventory": {
+    "source_adapters": [
+      "bilibili",
+      "douyin",
+      "generic_video",
+      "instagram",
+      "local_audio",
+      "tiktok",
+      "twitch",
+      "vimeo",
+      "x_video",
+      "xiaohongshu",
+      "youtube"
+    ],
+    "downloader_backends": ["dedicated_douyin", "local_file", "yt_dlp"],
+    "ui_surfaces": ["web_console"],
+    "maintenance_workflows": ["source_update_check"],
+    "asr_engines": [
+      "aliyun_qwen_asr",
+      "custom_api",
+      "faster_whisper",
+      "mimo",
+      "mock",
+      "tencent_asr",
+      "volcengine_asr"
+    ],
+    "asr_providers": [
+      "mock",
+      "faster_whisper",
+      "mimo",
+      "custom_api",
+      "aliyun_qwen_asr",
+      "tencent_asr",
+      "volcengine_asr"
+    ],
+    "asr_engine_modules": [
+      "aliyun_qwen_asr_engine",
+      "custom_api_engine",
+      "faster_whisper_engine",
+      "mimo_engine",
+      "mock_engine",
+      "openai_whisper_engine",
+      "tencent_asr_engine",
+      "volcengine_asr_engine"
+    ],
+    "mcp_templates": [
+      "claude-code.mcp.example.json",
+      "generic-http-obsidian-mcp.example.json",
+      "generic-stdio-obsidian-mcp.example.json",
+      "qoderwork-cn-http-obsidian.example.json",
+      "qoderwork-cn-stdio-obsidian.example.json",
+      "trae-mcp.example.md",
+      "vscode.mcp.example.json"
+    ],
+    "skills": [
+      "content-ingest",
+      "douyin-archive-knowledge",
+      "douyin-curate-via-obsidian-mcp",
+      "douyin-env-check",
+      "project-memory-capture",
+      "douyin-transcribe-batch",
+      "douyin-transcribe-one",
+      "obsidian-mcp-env-check"
+    ],
+    "knowledge_workflows": ["project_memory_capture"]
+  }
+}
