@@ -221,51 +221,6 @@ Obsidian/AI外脑知识库/         # 内置知识库骨架
 tools/check_text_encoding.py  # UTF-8 文本健康检查
 ```
 
-## 不要提交的内容
-
-以下内容不应该进入公开 GitHub 仓库：
-
-- `config.ini`
-- `.env`
-- `.venv/`
-- `runtime/`
-- `outputs/`
-- `.workflow/`
-- API Key、Cookie、Token
-- 下载媒体和音视频中间文件
-- Obsidian 个人运行数据
-
-项目的源码发布构建器会自动排除这些内容。
-
-## 发布源码包
-
-构建干净源码 ZIP：
-
-```powershell
-python -X utf8 tools/build_source_release.py
-```
-
-发布包会保留：
-
-- Web Console
-- 五层架构源码
-- ASR 引擎
-- yt-dlp 获取层
-- Project Memory
-- MCP 模板
-- Obsidian 知识库骨架
-- 必要的只读健康检查工具
-
-发布包会排除：
-
-- 测试目录
-- 开发临时目录
-- 运行数据
-- 本地配置
-- 密钥
-- 缓存
-- 下载媒体
-
 ## 推荐工作方式
 
 普通用户：
@@ -281,6 +236,17 @@ AI coding agent：
 3. 读取 `skills/INIT_PROTOCOL.md`。
 4. 执行 Route 1.2 检查。
 5. 如缺少 `config.ini`，启动 Web Console，而不是在聊天里做初始化问答。
+
+## 本地数据与隐私
+
+AI 外脑 2.0 是本地项目。你的配置、输出、缓存、审核记录和 Obsidian 知识库内容默认都保存在本机项目目录中。
+
+使用时请注意：
+
+- API Key、Cookie、Token 等敏感信息只应保存在本地配置或服务商后台。
+- Web Console 只监听本机地址，不作为公网服务。
+- 下载媒体、音频缓存和转写输出由你本地管理。
+- 正式写入知识库前，需要经过审核门确认。
 
 ## 当前边界
 
