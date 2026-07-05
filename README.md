@@ -1,335 +1,291 @@
-# douyin-to-text-agent-cli
+# AI 外脑 2.0
 
-## Five-layer architecture
+AI 外脑 2.0 是一个本地运行的个人知识获取与知识管理工作台。它以“五层架构”为核心，把链接、音视频、本地文件和项目记忆整理成可审核、可归档、可继续加工的知识资产。
 
-AI外脑 separates product responsibilities into:
+项目当前不再只是“抖音转文字”，也不只依赖 MiMo。它已经包含本地 Web Console、多信源获取、yt-dlp 视频平台基础获取、多个 ASR 引擎、Obsidian MCP 审核归档、项目记忆沉淀和源码自动更新检查。
 
-```text
-信源层 -> 采集层 -> 处理层 -> 知识加工层 -> 返回层
-```
+## 核心能力
 
-Currently implemented sources are Douyin and local audio. Video Channels, WeChat articles, Bilibili, webpages, images, and PDF are planned adapter targets only.
+- 本地 Web Console：首次初始化、能力查看、信源配置、ASR 配置、MCP 状态、项目记忆等统一在网页中完成。
+- 五层工作流：信源层 → 采集层 → 处理层 → 知识加工层 → 返回层。
+- 多信源接入：抖音、本地音频、本地 MP4，以及 YouTube、B 站、TikTok、Instagram、小红书、Twitch、Vimeo、X / Twitter、通用视频链接。
+- yt-dlp 获取后端：用于未建立专用链路的视频平台；抖音仍优先使用项目内专用链路。
+- 音视频转文字：支持本地和云端 ASR。
+- 知识卡片审核：card / both 模式会生成待审核草稿，正式进入知识库必须经过审核门。
+- Obsidian 知识库集成：内置 AI 外脑知识库骨架、MCP 模板和分类目录。
+- 项目记忆：把 AI coding 阶段成果、决策、风险和下一步沉淀到 `08_项目映射库`。
+- 源码自动更新：用户从 GitHub clone 后，启动时可检查远程新版本，并在本地源码未改动时安全快进更新。
 
-The generic entry point is:
+## 推荐使用方式
 
-```bash
-python agent_cli.py ingest --source-type auto --text "<source input>" --pretty
-python agent_cli.py ingest --source-type local_audio --audio-file "<path>" --pretty
-```
+首次运行请在项目根目录执行：
 
-Results include the nested `source`, `acquisition`, `processing`, `knowledge`, `delivery`, and `next` objects while retaining all legacy flat JSON fields. See `docs/five-layer-architecture.md`.
-
-## Project virtual environment
-
-`agent_cli.py` and `main.py` automatically create and use the project-level `.venv`. Core dependencies are installed there before the original command is restarted. Local ASR dependencies are installed only when `faster_whisper` is selected, so the system Python and an existing system Torch installation are not modified.
-
-Dependency groups:
-
-```bash
-pip install -r requirements.txt
-pip install -r requirements-asr.txt
-```
-
-Set `AI_OUTBRAIN_DISABLE_VENV_BOOTSTRAP=1` only for CI or an already managed environment.
-
-All user runtime data remains inside the project so the whole folder can be copied. `.venv` is reused when valid and rebuilt after a machine or Python-path change; `runtime/models`, configuration, reviews, outputs, and Vault content are preserved.
-
-## Clean source release
-
-Build a clean initialization package without modifying the working project:
-
-```bash
-python tools/build_source_release.py
-```
-
-The ZIP retains all source code, tests, skills, MCP templates, Vault structure, and Local REST API. It excludes runtime environments, models, caches, secrets, review records, personal Inbox content, and the Claudian plugin from the release package only.
-
-## Route 1.2 MCP startup
-
-This copy supports any MCP-capable AI coding agent. QoderWork CN is the recommended default, while Claude Code, Codex, Trae, VS Code, and other clients can use the templates under `mcp/`.
-
-When an agent loads this project:
-
-```bash
-python -X utf8 agent_cli.py route12-check --pretty
-python -X utf8 agent_cli.py route12-mcp-templates --pretty
-```
-
-Read `docs/mcp-setup.md` before configuring the Obsidian bridge. MCP may be configured in different locations for different agents, so the project provides templates but does not auto-install or auto-register external MCP servers.
-
-Without MCP, transcription may still write to Inbox. Formal classification and index updates must not proceed.
-
-MCP setup is part of first-run initialization. `mcp-setup` guides client configuration, `mcp-verify` records real tool checks, and `mcp-status` reports readiness. Plugin detection alone does not set `mcp_ready=true`. If MCP is skipped, initialization forces `im_content_mode=original`.
-
-## Interactive content routing
-
-Initialization stores two independent preferences:
-
-```ini
-[preferences]
-im_content_mode = both
-interaction_channel = auto
-```
-
-`im_content_mode` supports:
-
-- `original`: return the transcript.
-- `card`: continue through Obsidian MCP and return a knowledge-card review draft.
-- `both`: return the transcript and the review draft.
-
-`interaction_channel = auto` uses the originating IM channel when available. Direct Claude Code, Codex, Trae, or terminal-agent calls continue in the current command/chat window.
-
-Knowledge-card reviews use:
-
-```bash
-python agent_cli.py review-list --pretty
-python agent_cli.py review-show --review-id "<id>" --pretty
-python agent_cli.py review-revise --review-id "<id>" --instruction "<changes>" --pretty
-python agent_cli.py review-approve --review-id "<id>" --pretty
-python agent_cli.py review-cancel --review-id "<id>" --pretty
-```
-
-After an MCP draft is written, call `review-draft-ready`. After approved final card and index writes, call `review-finalized`. IM and command-line AI agents follow this same gate; `interaction_channel` only controls where the review is shown.
-
-Approval authorizes final Obsidian MCP filing. It does not delete the original Inbox transcript.
-
-把抖音链接或分享文案转成文字稿，并导出为 Markdown 或 TXT 的命令行工具。
-
-## 功能
-
-- 支持抖音短链、长链和完整分享文案。
-- 支持单条转写和批量转写。
-- 支持 `faster_whisper` 本地转写。
-- 支持 MiMo ASR API 转写。
-- 支持导出 `md`、`txt` 或 `both`。
-- 支持指定输出目录或知识库目录。
-- 默认将文字稿转换为简体中文。
-- `agent_cli.py` 输出 JSON，适合 agent 或脚本调用。
-
-## 安装
-
-安装基础依赖：
-
-```bash
-pip install -r requirements.txt
-```
-
-如果使用本地 `faster_whisper` 转写，初始化会自动安装本地 ASR 依赖。也可以提前手动安装：
-
-```bash
-pip install -U -i https://pypi.tuna.tsinghua.edu.cn/simple faster-whisper opencc-python-reimplemented
-```
-
-安装并确认 `ffmpeg` / `ffprobe` 可用：
-
-```bash
-ffmpeg -version
-ffprobe -version
-```
-
-Windows 建议使用 UTF-8 运行：
-
-```bash
-python -X utf8 agent_cli.py --help
-```
-
-也可以在当前终端设置 `PYTHONUTF8=1`。Windows PowerShell 5.1 的活动代码页、
-控制台输出编码和 `$OutputEncoding` 可能不一致，因此终端出现中文乱码不代表源码
-已经损坏。请先运行只读检查：
-
-```bash
-python -X utf8 tools/check_text_encoding.py
-python -X utf8 tools/check_text_encoding.py --json
-```
-
-扫描器严格检查公开维护文本的 UTF-8、U+FFFD、NUL 和高置信连续乱码片段。
-它不会批量转码或自动改写文件；BOM 只报告为 warning。
-
-## 初始化
-
-首次使用推荐运行交互初始化：
-
-```bash
-python -X utf8 agent_cli.py init
-```
-
-初始化会配置：
-
-- ASR 引擎：`faster_whisper` 或 `mimo`
-- 本地模型：`base`、`small`、`medium`
-- MiMo API Key
-- 导出目录
-- 音频目录
-- 是否保留音频
-- 默认导出格式
-
-选择本地 `faster_whisper` 时，初始化会自动准备：
-
-- `faster-whisper`
-- `opencc-python-reimplemented`，用于简体中文转换
-- 所选 faster-whisper 模型
-
-首次本地初始化需要下载依赖和模型，可能耗时较久。Python 依赖使用清华 PyPI 镜像，模型下载默认使用 `https://hf-mirror.com`。
-
-首次初始化强制使用本地 Web Console，不在聊天窗口逐项询问，也不提供第二条 CLI 初始化路径：
-
-```bash
+```powershell
 python -X utf8 main.py
 ```
 
-或：
+或者：
 
-```bash
+```powershell
 python -X utf8 agent_cli.py init
 ```
 
-Web Console 会引导选择 ASR、输出目录、MCP、内容模式等，并写入 `config.ini`。不要公开或提交包含 API Key 的 `config.ini`。
+这两个入口都会打开本地 Web Console。首次初始化必须通过 Web Console 完成，不在聊天窗口逐题询问，也不提供第二套对话式初始化流程。
 
-## Obsidian 初始化知识库
-
-项目内置 `Obsidian/AI外脑知识库/` 作为默认初始化知识库模板。默认转写输出目录为：
+Web Console 默认只监听本机地址：
 
 ```text
-Obsidian\AI外脑知识库\00_Inbox\抖音链接
+127.0.0.1
 ```
 
-发布项目时保留这个目录，它不是运行缓存。`.claudian/sessions/` 只保留空目录占位，本机会话记录不会公开。
+## 初始化会配置什么
 
-## 环境检查
+初始化页面会引导你配置：
 
-检查本地环境：
+- ASR 引擎
+- ASR 凭据或本地模型大小
+- 文字稿输出目录
+- 音频缓存目录
+- 导出格式
+- 内容返回模式：原文、知识卡片、双输出
+- 交互渠道：自动判断、IM、终端
+- 是否保留音频
+- 是否配置 Obsidian MCP
 
-```bash
-python -X utf8 agent_cli.py check-env --pretty
+配置会写入本地 `config.ini`。请不要把包含 API Key、密钥或个人路径的 `config.ini` 提交到公开仓库。
+
+## 支持的信源
+
+当前已登记并接入主管线的信源包括：
+
+| 信源 | 获取方式 | 说明 |
+| --- | --- | --- |
+| 抖音 | 专用链路 | 当前稳定链路，不改走 yt-dlp |
+| 本地音频 | 本地文件 | 支持常见音频格式 |
+| 本地 MP4 | 本地文件 | 可作为本地媒体输入 |
+| YouTube | yt-dlp | 基础获取能力，部分内容可能需要 Cookie |
+| B 站 | yt-dlp | 基础获取能力，部分内容可能需要 Cookie |
+| TikTok | yt-dlp | 基础获取能力 |
+| Instagram | yt-dlp | 可能需要登录 Cookie |
+| 小红书 | yt-dlp | 通常需要登录 Cookie |
+| Twitch | yt-dlp | 基础获取能力 |
+| Vimeo | yt-dlp | 基础获取能力 |
+| X / Twitter | yt-dlp | 可能需要登录 Cookie |
+| 通用视频链接 | yt-dlp | 用于无专用适配器的视频网页 |
+
+普通网页正文、公众号正文、PDF、图片 OCR、纯文本直通等方向属于后续扩展，不在当前版本中冒充完整打通。
+
+## 支持的 ASR 引擎
+
+当前 ASR 能力池包括：
+
+| 引擎 | 类型 | 状态 |
+| --- | --- | --- |
+| faster-whisper | 本地 | 已实现 |
+| MiMo ASR | 云端 | 已实现 |
+| 阿里云百炼 Qwen-ASR | 云端 | 已接入配置与引擎 |
+| 腾讯云 ASR | 云端 | 已接入配置与引擎 |
+| 火山引擎豆包语音识别 | 云端 | 已接入配置与引擎 |
+| custom_api | 自定义接口 | 预留 |
+| mock | 测试引擎 | 用于开发和验证 |
+
+真实云端 ASR 使用前需要在 Web Console 中填写对应服务商凭据。项目不会把密钥写入 README、Skill 或公开模板。
+
+## 常用命令
+
+启动 Web Console：
+
+```powershell
+python -X utf8 main.py
 ```
 
-查看本地模型状态：
+检查 Route 1.2 / Obsidian MCP 状态：
 
-```bash
-python -X utf8 agent_cli.py models --pretty
+```powershell
+python -X utf8 agent_cli.py route12-check --pretty
 ```
 
-## 单条转写
+查看 MCP 模板：
 
-从分享文案中提取链接并转写：
-
-```bash
-python -X utf8 agent_cli.py transcribe --text "<抖音分享文案>" --export md --pretty
+```powershell
+python -X utf8 agent_cli.py route12-mcp-templates --pretty
 ```
 
-直接转写链接：
+通过五层主管线处理一个链接或本地路径：
 
-```bash
-python -X utf8 agent_cli.py transcribe --url "https://v.douyin.com/xxxx/" --export md --pretty
+```powershell
+python -X utf8 agent_cli.py ingest "<链接或本地文件路径>" --source-type auto --pretty
 ```
 
-指定引擎：
+手动检查源码更新：
 
-```bash
-python -X utf8 agent_cli.py transcribe --url "https://v.douyin.com/xxxx/" --engine mimo --export md --pretty
+```powershell
+python -X utf8 agent_cli.py update-check --no-pull --pretty
 ```
 
-IM 回复模式会把完整文字稿放进 JSON，便于 agent 直接在聊天里贴正文：
+允许安全自动拉取更新：
 
-```bash
-python -X utf8 agent_cli.py transcribe --text "<抖音分享文案>" --response-mode im --pretty
+```powershell
+python -X utf8 agent_cli.py update-check --pretty
 ```
 
-也可以继续使用 `--include-transcript` 只请求 `transcript` 字段。
+## 自动更新规则
 
-## 批量转写
+源码版从 GitHub clone 后，每次通过以下入口加载时会检查是否有新版本：
 
-从文本中提取多条链接并顺序转写：
-
-```bash
-python -X utf8 agent_cli.py batch --text "<多条抖音分享文案>" --export md --pretty
+```powershell
+python -X utf8 main.py
+python -X utf8 agent_cli.py init
+python -X utf8 agent_cli.py console
 ```
 
-从文件读取链接：
+更新策略是保守的：
 
-```bash
-python -X utf8 agent_cli.py batch --input-file links.txt --export md --pretty
+- 只检查当前 Git 仓库的 `origin`。
+- 只在当前分支落后远端时处理。
+- 只有本地已跟踪源码没有改动时，才执行 `git pull --ff-only`。
+- 如果用户本地改过源码，只提示有更新，不会覆盖。
+- 不会自动 `git add`、不会自动 `git commit`、不会自动 `git push`。
+
+如需临时关闭启动检查：
+
+```powershell
+$env:AI_OUTBRAIN_DISABLE_UPDATE_CHECK = "1"
 ```
 
-## 输出目录
+## Obsidian MCP 与审核门
 
-指定普通输出目录：
+Route 1.2 的目标是让 AI coding agent 通过 Obsidian MCP / REST 控制知识库，而不是直接绕过审核写正式分类目录。
 
-```bash
-python -X utf8 agent_cli.py transcribe --text "<抖音分享文案>" --output-dir "Obsidian\AI外脑知识库\00_Inbox\抖音链接" --export both --pretty
+规则：
+
+- 转写结果可以进入 Inbox。
+- card / both 模式会生成 `_待审核` 草稿。
+- 正式写入分类目录和索引必须经过审核。
+- MCP 不可用时，知识卡片归档必须停止；可以把原文作为 fallback 返回。
+- 插件已安装不等于 MCP 已连接，必须通过真实读取、写入、删除测试验证。
+
+常用审核命令：
+
+```powershell
+python -X utf8 agent_cli.py review-list --pretty
+python -X utf8 agent_cli.py review-show --review-id "<review_id>" --pretty
+python -X utf8 agent_cli.py review-approve --review-id "<review_id>" --pretty
+python -X utf8 agent_cli.py review-revise --review-id "<review_id>" --instruction "<修改意见>" --pretty
+python -X utf8 agent_cli.py review-cancel --review-id "<review_id>" --pretty
 ```
 
-写入知识库目录：
+## 项目记忆
 
-```bash
-python -X utf8 agent_cli.py transcribe --text "<抖音分享文案>" --knowledge-dir "D:\Knowledge\Inbox" --export md --pretty
+项目记忆用于把开发型 AI Agent 的阶段成果沉淀到 Obsidian 的 `08_项目映射库`。
+
+它适合记录：
+
+- 本轮目标
+- 已完成成果
+- 关键决策
+- 修改范围
+- 测试与验证
+- 风险与技术债
+- 后续计划
+- 可关联知识点
+
+项目内置 Skill：
+
+```text
+skills/project-memory-capture/SKILL.md
 ```
 
-保留提取出的音频：
+外部工作 Agent 可以生成结构化 `memory.json` 后调用：
 
-```bash
-python -X utf8 agent_cli.py transcribe --text "<抖音分享文案>" --keep-audio --pretty
+```powershell
+python -X utf8 agent_cli.py project-memory-capture --payload-file memory.json --pretty
 ```
 
-## JSON 输出
+项目记忆同样不直接写正式库，必须经过 `_待审核 → approve → finalized`。
 
-成功示例：
+## 项目目录
 
-```json
-{
-  "success": true,
-  "mode": "transcribe",
-  "title": "示例抖音视频",
-  "author": "示例作者",
-  "md_path": "Obsidian/AI外脑知识库/00_Inbox/抖音链接/示例抖音视频.md",
-  "txt_path": "",
-  "exported_paths": ["Obsidian/AI外脑知识库/00_Inbox/抖音链接/示例抖音视频.md"],
-  "audio_path": "",
-  "engine": "mimo",
-  "transcript_chars": 1234,
-  "error": "",
-  "logs": []
-}
+```text
+agent_cli.py                  # 面向 AI Agent 和脚本的 JSON CLI
+main.py                       # 用户默认入口，启动本地 Web Console
+bootstrap_runtime.py          # 自动创建和复用项目 .venv
+src/                          # 核心源码
+src/layers/                   # 五层架构实现
+src/asr/                      # ASR 引擎
+src/web_console/              # 本地 Web Console
+skills/                       # 项目内置 Skills
+mcp/                          # Obsidian MCP 配置模板
+docs/                         # 架构与接入文档
+Obsidian/AI外脑知识库/         # 内置知识库骨架
+tools/check_text_encoding.py  # UTF-8 文本健康检查
 ```
 
-失败示例：
+## 不要提交的内容
 
-```json
-{
-  "success": false,
-  "stage": "input",
-  "error": "未从输入中找到抖音链接"
-}
-```
-
-首次使用且没有 `config.ini` 时，非交互调用会返回 `stage=init`。支持本地 skills 的 agent 应按 `skills/INIT_PROTOCOL.md` 在对话里完成初始化，然后重试原命令。
-
-## MiMo 大音频处理
-
-MiMo API 有音频大小限制。工具会在音频接近限制前自动分片转写，并在合并时做相邻去重。分片失败不会写入正文，会体现在返回 JSON 的 `error` 字段中。
-
-## 项目 Skills
-
-项目内置 4 个说明型 skill，供支持本地 skill 的 agent 读取：
-
-- `skills/douyin-env-check/`
-- `skills/douyin-transcribe-one/`
-- `skills/douyin-transcribe-batch/`
-- `skills/douyin-archive-knowledge/`
-
-这些 skill 只说明何时以及如何调用 `agent_cli.py`。
-
-当 `config.ini` 不存在时，skills 会先按 `skills/INIT_PROTOCOL.md` 在对话里完成初始化，再继续转写或检查环境。
-
-## 不要公开的文件
-
-发布或提交前不要包含：
+以下内容不应该进入公开 GitHub 仓库：
 
 - `config.ini`
 - `.env`
-- `outputs/`
+- `.venv/`
 - `runtime/`
-- API Key
-- 音频或视频临时文件
-- `__pycache__/`
-- `.pyc`
+- `outputs/`
+- `.workflow/`
+- API Key、Cookie、Token
+- 下载媒体和音视频中间文件
+- Obsidian 个人运行数据
+
+项目的源码发布构建器会自动排除这些内容。
+
+## 发布源码包
+
+构建干净源码 ZIP：
+
+```powershell
+python -X utf8 tools/build_source_release.py
+```
+
+发布包会保留：
+
+- Web Console
+- 五层架构源码
+- ASR 引擎
+- yt-dlp 获取层
+- Project Memory
+- MCP 模板
+- Obsidian 知识库骨架
+- 必要的只读健康检查工具
+
+发布包会排除：
+
+- 测试目录
+- 开发临时目录
+- 运行数据
+- 本地配置
+- 密钥
+- 缓存
+- 下载媒体
+
+## 推荐工作方式
+
+普通用户：
+
+```powershell
+python -X utf8 main.py
+```
+
+AI coding agent：
+
+1. 读取 `AGENTS.md`。
+2. 读取 `initialization_manifest.json`。
+3. 读取 `skills/INIT_PROTOCOL.md`。
+4. 执行 Route 1.2 检查。
+5. 如缺少 `config.ini`，启动 Web Console，而不是在聊天里做初始化问答。
+
+## 当前边界
+
+- Web Console 是本地控制台，不提供公网服务。
+- yt-dlp 平台的真实可用性会受平台限制、地区、登录态和 Cookie 影响。
+- 云 ASR 需要用户自行配置服务商凭据。
+- 正式知识库归档必须走审核门。
+- cc-connect / IM Bridge 实验已取消，不属于当前发布版核心能力。
